@@ -1,8 +1,10 @@
 import unittest
 import tempfile
 import os
+import six
 
 import caffe
+
 
 class SimpleLayer(caffe.Layer):
     """A layer that just multiplies by ten"""
@@ -11,8 +13,7 @@ class SimpleLayer(caffe.Layer):
         pass
 
     def reshape(self, bottom, top):
-        top[0].reshape(bottom[0].num, bottom[0].channels, bottom[0].height,
-                bottom[0].width)
+        top[0].reshape(*bottom[0].data.shape)
 
     def forward(self, bottom, top):
         top[0].data[...] = 10 * bottom[0].data
@@ -20,18 +21,19 @@ class SimpleLayer(caffe.Layer):
     def backward(self, top, propagate_down, bottom):
         bottom[0].diff[...] = 10 * top[0].diff
 
+
 def python_net_file():
-    f = tempfile.NamedTemporaryFile(delete=False)
-    f.write("""name: 'pythonnet' force_backward: true
-    input: 'data' input_dim: 10 input_dim: 9 input_dim: 8 input_dim: 7
-    layer { type: 'Python' name: 'one' bottom: 'data' top: 'one'
-      python_param { module: 'test_python_layer' layer: 'SimpleLayer' } }
-    layer { type: 'Python' name: 'two' bottom: 'one' top: 'two'
-      python_param { module: 'test_python_layer' layer: 'SimpleLayer' } }
-    layer { type: 'Python' name: 'three' bottom: 'two' top: 'three'
-      python_param { module: 'test_python_layer' layer: 'SimpleLayer' } }""")
-    f.close()
-    return f.name
+    with tempfile.NamedTemporaryFile(mode='w+', delete=False) as f:
+        f.write("""name: 'pythonnet' force_backward: true
+        input: 'data' input_shape { dim: 10 dim: 9 dim: 8 }
+        layer { type: 'Python' name: 'one' bottom: 'data' top: 'one'
+          python_param { module: 'test_python_layer' layer: 'SimpleLayer' } }
+        layer { type: 'Python' name: 'two' bottom: 'one' top: 'two'
+          python_param { module: 'test_python_layer' layer: 'SimpleLayer' } }
+        layer { type: 'Python' name: 'three' bottom: 'two' top: 'three'
+          python_param { module: 'test_python_layer' layer: 'SimpleLayer' } }""")
+        return f.name
+
 
 class TestPythonLayer(unittest.TestCase):
     def setUp(self):
@@ -57,6 +59,6 @@ class TestPythonLayer(unittest.TestCase):
         s = 4
         self.net.blobs['data'].reshape(s, s, s, s)
         self.net.forward()
-        for blob in self.net.blobs.itervalues():
+        for blob in six.itervalues(self.net.blobs):
             for d in blob.data.shape:
                 self.assertEqual(s, d)

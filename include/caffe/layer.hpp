@@ -21,11 +21,11 @@ template <typename Dtype> class Net;
  * @brief An interface for the units of computation which can be composed into a
  *        Net.
  *
- * Layer&s must implement a Forward function, in which they take their input
- * (bottom) Blob&s (if any) and compute their output Blob&s (if any).
+ * Layer%s must implement a Forward function, in which they take their input
+ * (bottom) Blob%s (if any) and compute their output Blob%s (if any).
  * They may also implement a Backward function, in which they compute the error
- * gradients with respect to their input Blob&s, given the error gradients with
- * their output Blob&s.
+ * gradients with respect to their input Blob%s, given the error gradients with
+ * their output Blob%s.
  */
 template <typename Dtype>
 class Layer {
@@ -143,7 +143,7 @@ class Layer {
    * (Backward_cpu or Backward_gpu) to compute the bottom blob diffs given the
    * top blob diffs.
    *
-   * Your layer should implement Forward_cpu and (optionally) Forward_gpu.
+   * Your layer should implement Backward_cpu and (optionally) Backward_gpu.
    */
   inline void Backward(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down,
@@ -423,6 +423,7 @@ template <typename Dtype>
 inline Dtype Layer<Dtype>::Forward(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
   Dtype loss = 0;
+  Reshape(bottom, top);
   switch (Caffe::mode()) {
   case Caffe::CPU:
     Forward_cpu(bottom, top);
