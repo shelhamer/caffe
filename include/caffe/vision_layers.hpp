@@ -566,8 +566,6 @@ class CropLayer : public Layer<Dtype> {
   int crop_h_, crop_w_;
 };
 
-};
-
 }  // namespace caffe
 
 #endif  // CAFFE_VISION_LAYERS_HPP_
