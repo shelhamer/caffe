@@ -599,11 +599,14 @@ message ConvolutionParameter {
   optional bool force_nd_im2col = 17 [default = false];
 }
 
-message CropParameter {
-  // Assumes standard dimensions: ( N,C,H,W )
-  // This could possibly be extended to  use "optional BlobShape offsets"
-  optional uint32 offset_height = 1[default = 0];
-  optional uint32 offset_width = 2[default = 0];
+message CropParameter {  
+  // If only one crop_offset is specified, all the dimensions after the specified
+  // axis would be cropped (by the same amount); otherwise the number of crop
+  // values specified must be equal to the number of dimensions following axis, and
+  // the trailing dimensions would be cropped accordingly.
+  // Protip: standard dimensions are ( N,C,H,W )
+  optional uint32 axis = 1 [default = 2];
+  repeated uint32 offset = 2;
 }
 
 message DataParameter {
