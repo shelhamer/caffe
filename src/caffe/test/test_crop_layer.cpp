@@ -23,10 +23,10 @@ class CropLayerTest : public MultiDeviceTest<TypeParam> {
         blob_top_(new Blob<Dtype>()) {}
   virtual void SetUp() {
     // fill the values
-    for (int i = 0; i < this->blob_bottom_0_->count(); ++i) {
-      this->blob_bottom_0_->mutable_cpu_data()[i] = i;
-    }
-
+    FillerParameter filler_param;
+    GaussianFiller<Dtype> filler(filler_param);
+    filler.Fill(this->blob_bottom_0_);
+    filler.Fill(this->blob_bottom_1_);
 
     blob_bottom_vec_0_.push_back(blob_bottom_0_);
     blob_bottom_vec_0_.push_back(blob_bottom_1_);
