@@ -220,4 +220,46 @@ TYPED_TEST(CropLayerTest, TestCrop5D) {
   }
 }
 
+TYPED_TEST(CropLayerTest, TestCropAllGradient) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter layer_param;
+  layer_param.mutable_crop_param()->set_axis(0);
+  CropLayer<Dtype> layer(layer_param);
+  GradientChecker<Dtype> checker(1e-2, 1e-3);
+  checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
+      this->blob_top_vec_);
+}
+
+TYPED_TEST(CropLayerTest, TestCropHWGradient) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter layer_param;
+  layer_param.mutable_crop_param()->set_axis(2);
+  layer_param.mutable_crop_param()->add_offset(1);
+  layer_param.mutable_crop_param()->add_offset(2);
+  CropLayer<Dtype> layer(layer_param);
+  GradientChecker<Dtype> checker(1e-2, 1e-3);
+  checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
+      this->blob_top_vec_);
+}
+
+TYPED_TEST(CropLayerTest, TestCrop5DGradient) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter layer_param;
+  layer_param.mutable_crop_param()->set_axis(2);
+  layer_param.mutable_crop_param()->add_offset(1);
+  layer_param.mutable_crop_param()->add_offset(2);
+  layer_param.mutable_crop_param()->add_offset(0);
+  CropLayer<Dtype> layer(layer_param);
+  // Add dimension to each bottom for >4D check
+  vector<int> bottom_0_shape = this->blob_bottom_0_->shape();
+  vector<int> bottom_1_shape = this->blob_bottom_1_->shape();
+  bottom_0_shape.push_back(2);
+  bottom_1_shape.push_back(1);
+  this->blob_bottom_0_->Reshape(bottom_0_shape);
+  this->blob_bottom_1_->Reshape(bottom_1_shape);
+  GradientChecker<Dtype> checker(1e-2, 1e-3);
+  checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
+      this->blob_top_vec_);
+}
+
 }  // namespace caffe
