@@ -51,7 +51,6 @@ TYPED_TEST_CASE(CropLayerTest, TestDtypesAndDevices);
 TYPED_TEST(CropLayerTest, TestSetupShapeAll) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-
   // Crop all dimensions
   layer_param.mutable_crop_param()->set_axis(0);
   CropLayer<Dtype> layer(layer_param);
@@ -137,7 +136,7 @@ TYPED_TEST(CropLayerTest, TestForwardNumOffsets) {
               h < this->blob_top_->shape(2) &&
               w < this->blob_top_->shape(3) ) {
             EXPECT_EQ(this->blob_top_->data_at(n, c, h, w),
-                this->blob_bottom_0_->data_at(n+0, c+1, h+1, w+2));
+                this->blob_bottom_0_->data_at(n, c+1, h+1, w+2));
           }
         }
       }
@@ -149,28 +148,23 @@ TYPED_TEST(CropLayerTest, TestGradientNum) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   CropLayer<Dtype> layer(layer_param);
-
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-
   // Copy top data into diff
   caffe_copy(this->blob_top_->count(), this->blob_top_->cpu_data(),
              this->blob_top_->mutable_cpu_diff());
-
   // Do backward pass
   vector<bool> propagate_down(2, true);
   layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
-
-
   // Check results
   for (int n = 0; n < this->blob_bottom_0_->num(); ++n) {
     for (int c = 0; c < this->blob_bottom_0_->channels(); ++c) {
       for (int h = 0; h < this->blob_bottom_0_->height(); ++h) {
         for (int w = 0; w < this->blob_bottom_0_->width(); ++w) {
-          if ( n < this->blob_top_->shape(0) &&
+          if (n < this->blob_top_->shape(0) &&
               c < this->blob_top_->shape(1) &&
               h < this->blob_top_->shape(2) &&
-              w < this->blob_top_->shape(3) ) {
+              w < this->blob_top_->shape(3)) {
             EXPECT_EQ(this->blob_bottom_0_->diff_at(n, c, h, w),
                       this->blob_bottom_0_->data_at(n, c, h, w));
           } else {
@@ -191,28 +185,23 @@ TYPED_TEST(CropLayerTest, TestGradientNumOffset) {
   layer_param.mutable_crop_param()->add_offset(1);
   layer_param.mutable_crop_param()->add_offset(2);
   CropLayer<Dtype> layer(layer_param);
-
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-
   // Copy top data into diff
   caffe_copy(this->blob_top_->count(), this->blob_top_->cpu_data(),
              this->blob_top_->mutable_cpu_diff());
-
   // Do backward pass
   vector<bool> propagate_down(2, true);
   layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
-
-
   // Check results
   for (int n = 0; n < this->blob_bottom_0_->num(); ++n) {
     for (int c = 0; c < this->blob_bottom_0_->channels(); ++c) {
       for (int h = 0; h < this->blob_bottom_0_->height(); ++h) {
         for (int w = 0; w < this->blob_bottom_0_->width(); ++w) {
-          if ( 0 <= n && n < 0 + this->blob_top_->shape(0) &&
+          if (0 <= n && n < 0 + this->blob_top_->shape(0) &&
               1 <= c && c < 1 + this->blob_top_->shape(1) &&
               1 <= h && h < 1 + this->blob_top_->shape(2) &&
-              2 <= w && w < 2 + this->blob_top_->shape(3) ) {
+              2 <= w && w < 2 + this->blob_top_->shape(3)) {
             EXPECT_EQ(this->blob_bottom_0_->diff_at(n, c, h, w),
                       this->blob_bottom_0_->data_at(n, c, h, w));
           } else {
