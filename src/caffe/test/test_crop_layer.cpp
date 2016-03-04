@@ -18,8 +18,8 @@ class CropLayerTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   CropLayerTest()
-      : blob_bottom_0_(new Blob<Dtype>(2, 5, 6, 5)),
-        blob_bottom_1_(new Blob<Dtype>(2, 4, 5, 3)),
+      : blob_bottom_0_(new Blob<Dtype>(2, 4, 5, 4)),
+        blob_bottom_1_(new Blob<Dtype>(2, 3, 4, 2)),
         blob_top_(new Blob<Dtype>()) {}
   virtual void SetUp() {
     // fill the values
