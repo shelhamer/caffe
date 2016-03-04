@@ -1,5 +1,7 @@
 # Caffe
 
+**This is a pre-release branch for fully convolutional networks. The PRs will soon be merged to master, but see `fcn.sh` for details.**
+
 [![Build Status](https://travis-ci.org/BVLC/caffe.svg?branch=master)](https://travis-ci.org/BVLC/caffe)
 [![License](https://img.shields.io/badge/license-BSD-blue.svg)](LICENSE)
 
