@@ -930,6 +930,7 @@ message ReductionParameter {
     ASUM = 2;
     SUMSQ = 3;
     MEAN = 4;
+    MAX = 5;
   }
 
   optional ReductionOp operation = 1 [default = SUM]; // reduction operation

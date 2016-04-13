@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <vector>
 
 #include "gtest/gtest.h"
@@ -62,6 +63,10 @@ class ReductionLayerTest : public MultiDeviceTest<TypeParam> {
             break;
           case ReductionParameter_ReductionOp_SUMSQ:
             expected_result += (*in_data) * (*in_data);
+            break;
+          case ReductionParameter_ReductionOp_MAX:
+            expected_result =
+                (expected_result > *in_data) ? expected_result : *in_data;
             break;
           default:
             LOG(FATAL) << "Unknown reduction op: "
@@ -291,6 +296,44 @@ TYPED_TEST(ReductionLayerTest, TestSumOfSquaresCoeffAxis1Gradient) {
   const float kCoeff = 2.3;
   const int kAxis = 1;
   this->TestGradient(kOp, kCoeff, kAxis);
+}
+
+TYPED_TEST(ReductionLayerTest, TestMax) {
+  const ReductionParameter_ReductionOp kOp =
+      ReductionParameter_ReductionOp_MAX;
+  this->TestForward(kOp);
+}
+
+TYPED_TEST(ReductionLayerTest, TestMaxGradient) {
+  typedef typename TypeParam::Dtype Dtype;
+  const ReductionParameter_ReductionOp kOp =
+      ReductionParameter_ReductionOp_MAX;
+  const Dtype kTopDiff = 1;
+  LayerParameter layer_param;
+  ReductionParameter* reduction_param = layer_param.mutable_reduction_param();
+  reduction_param->set_operation(kOp);
+  ReductionLayer<Dtype> layer(layer_param);
+  layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+  layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+  // Set dummy top diff, do backward, and check the top diff
+  // has propagated to the bottom max
+  Dtype* top_diff = this->blob_top_->mutable_cpu_diff();
+  *top_diff = kTopDiff;
+  vector<bool> propagate_down;
+  propagate_down.push_back(true);
+  layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
+  const Dtype* bottom_diff = this->blob_bottom_->cpu_diff();
+  // Find bottom max and check top diff has propagated to it,
+  // while the rest of bottom diff stays zero
+  const int count = this->blob_bottom_->count();
+  const Dtype* bottom_data = this->blob_bottom_->cpu_data();
+  const int max_idx = std::distance(bottom_data,
+      std::max_element(bottom_data, bottom_data + count));
+  Dtype expected_result;
+  for (int i = 0; i < count; ++i) {
+    expected_result = (i != max_idx) ? 0 : *top_diff;
+    EXPECT_FLOAT_EQ(bottom_diff[i], expected_result);
+  }
 }
 
 }  // namespace caffe

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <vector>
 
 #include "caffe/layers/reduction_layer.hpp"
@@ -59,6 +60,9 @@ void ReductionLayer<Dtype>::Forward_cpu(
     case ReductionParameter_ReductionOp_SUMSQ:
       *top_data = caffe_cpu_dot(dim_, bottom_data, bottom_data);
       break;
+    case ReductionParameter_ReductionOp_MAX:
+      *top_data = *std::max_element(bottom_data, bottom_data + dim_);
+      break;
     default:
       LOG(FATAL) << "Unknown reduction op: "
           << ReductionParameter_ReductionOp_Name(op_);
@@ -87,6 +91,7 @@ void ReductionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   // Operations that need bottom_data
   case ReductionParameter_ReductionOp_ASUM:
   case ReductionParameter_ReductionOp_SUMSQ:
+  case ReductionParameter_ReductionOp_MAX:
     bottom_data = bottom[0]->cpu_data();
     break;
   default:
@@ -95,6 +100,8 @@ void ReductionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   }
   const Dtype* top_diff = top[0]->cpu_diff();
   Dtype* bottom_diff = bottom[0]->mutable_cpu_diff();
+  // Need index for max
+  int idx = 0;
   for (int i = 0; i < num_; ++i) {
     const Dtype bottom_coeff = (*top_diff) * coeff_;
     switch (op_) {
@@ -108,6 +115,11 @@ void ReductionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
       break;
     case ReductionParameter_ReductionOp_SUMSQ:
       caffe_cpu_scale(dim_, 2 * bottom_coeff, bottom_data, bottom_diff);
+      break;
+    case ReductionParameter_ReductionOp_MAX:
+      idx = std::distance(bottom_data,
+          std::max_element(bottom_data, bottom_data + dim_));
+      *(bottom_diff + idx) = bottom_coeff;
       break;
     default:
       LOG(FATAL) << "Unknown reduction op: "
