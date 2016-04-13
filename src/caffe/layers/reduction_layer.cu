@@ -6,6 +6,22 @@
 namespace caffe {
 
 template <typename Dtype>
+__global__ void MaxReductionForward(const int nthreads,
+    const Dtype* const bottom_data, const int dim_, Dtype* const top_data) {
+  CUDA_KERNEL_LOOP(index, nthreads) {
+    // TODO(shelhamer)
+  }
+}
+
+template <typename Dtype>
+__global__ void MaxReductionBackward(const int nthreads,
+    const Dtype* const top_diff, const int dim_, Dtype* const bottom_diff) {
+  CUDA_KERNEL_LOOP(index, nthreads) {
+    // TODO(shelhamer)
+  }
+}
+
+template <typename Dtype>
 void ReductionLayer<Dtype>::Forward_gpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   const Dtype* bottom_data = bottom[0]->gpu_data();
