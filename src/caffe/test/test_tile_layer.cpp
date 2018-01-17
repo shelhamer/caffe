@@ -77,6 +77,33 @@ TYPED_TEST(TileLayerTest, TestSetup) {
   }
 }
 
+TYPED_TEST(TileLayerTest, TestBottomSetup) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter layer_param;
+  const int kNumTiles = 2;
+  Blob<Dtype>* const blob_shape_ = new Blob<Dtype>;
+  vector<int> tiled_shape = this->blob_bottom_->shape();
+  for (int i = 0; i < tiled_shape.size(); ++i) {
+    tiled_shape[i] *= kNumTiles;
+  }
+  blob_shape_->Reshape(tiled_shape);
+  this->blob_bottom_vec_.push_back(blob_shape_);
+  for (int i = 0; i < this->blob_bottom_->num_axes(); ++i) {
+    layer_param.mutable_tile_param()->set_axis(i);
+    TileLayer<Dtype> layer(layer_param);
+    layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+    ASSERT_EQ(this->blob_top_->num_axes(), this->blob_bottom_->num_axes());
+    for (int j = 0; j < this->blob_bottom_->num_axes(); ++j) {
+      if (i == j) {
+        EXPECT_EQ(blob_shape_->shape(j), this->blob_top_->shape(j));
+      } else {
+        EXPECT_EQ(this->blob_bottom_->shape(j), this->blob_top_->shape(j));
+      }
+    }
+  }
+  delete blob_shape_;
+}
+
 TYPED_TEST(TileLayerTest, TestForwardNum) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;

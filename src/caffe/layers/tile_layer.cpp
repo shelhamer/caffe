@@ -8,10 +8,23 @@ namespace caffe {
 template <typename Dtype>
 void TileLayer<Dtype>::Reshape(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+  // bottom[0] supplies the data
+  // the tiles field or bottom[1] supplies the size
   const TileParameter& tile_param = this->layer_param_.tile_param();
   axis_ = bottom[0]->CanonicalAxisIndex(tile_param.axis());
-  CHECK(tile_param.has_tiles()) << "Number of tiles must be specified";
-  tiles_ = tile_param.tiles();
+  if (bottom.size() == 1) {
+    // Tile by argument
+    CHECK(tile_param.has_tiles()) << "Number of tiles must be specified.";
+    tiles_ = tile_param.tiles();
+  } else {
+    // Tile by bottom shape
+    CHECK(!tile_param.has_tiles())
+        << "Number of tiles can be specified or taken from the bottom shape "
+        << "but not both.";
+    CHECK_EQ(bottom[1]->shape(axis_) % bottom[0]->shape(axis_), 0)
+        << "The output size must be divisible by the tile size.";
+    tiles_ = bottom[1]->shape(axis_) / bottom[0]->shape(axis_);
+  }
   CHECK_GT(tiles_, 0) << "Number of tiles must be positive.";
   vector<int> top_shape = bottom[0]->shape();
   top_shape[axis_] = bottom[0]->shape(axis_) * tiles_;
